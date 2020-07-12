@@ -40,3 +40,16 @@ def strategy_model_from_spec(strategy_spec):
     elif strategy_spec['type'] == 'Boltzmann':
         strategy = Boltzmann(start=start, end=end, decay=decay)
     return strategy
+
+
+def memory_from_spec(memory_spec):
+    try:
+        capacity = memory_spec['size']
+    except:
+        pass  # Fix later
+
+    if memory_spec['type'] == 'StandardReplayMemory':
+        memory = StandardReplayMemory(capacity)
+    else:
+        raise ValueError("Invalid memory specification")
+    return memory
