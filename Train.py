@@ -155,7 +155,7 @@ def main(spec):
             
             
             # Train model
-            if memory.can_provide(MIN_MEMORY):
+            if memory.can_provide():
                 model.train(batch_size=MINIBATCH_SIZE,
                             discount=DISCOUNT, 
                             game_done=done,
