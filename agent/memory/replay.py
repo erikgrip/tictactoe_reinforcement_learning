@@ -13,7 +13,7 @@ class StandardReplayMemory():
     def sample(self, batch_size):
         return random.sample(self.memory, batch_size)
     
-    def can_provide(self):
-        return len(self.memory) >= self.min_size
+    def can_provide(self, size):
+        return len(self.memory) >= size
 
 

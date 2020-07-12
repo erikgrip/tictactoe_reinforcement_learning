@@ -79,7 +79,7 @@ def main(spec):
     MODE = spec['environment']['mode']
     MODEL_NAME = spec['net']['name']
     EPISODES = spec['train']['num_episodes']
-    MIN_MEMORY = spec['train']['min_memory']
+    MIN_MEMORY_TO_TRAIN = spec['train']['min_memory']
     MINIBATCH_SIZE = spec['train']['minibatch_size']
     DISCOUNT = spec['algorithm']['discount']
     UPDATE_TARGET_EVERY = spec['algorithm']['target_net_update_freq']
@@ -155,7 +155,7 @@ def main(spec):
             
             
             # Train model
-            if memory.can_provide():
+            if memory.can_provide(MIN_MEMORY_TO_TRAIN):
                 model.train(batch_size=MINIBATCH_SIZE,
                             discount=DISCOUNT, 
                             game_done=done,
