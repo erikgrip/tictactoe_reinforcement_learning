@@ -25,7 +25,8 @@ def sequential_model_from_spec(net_spec):
         raise ValueError('Invalid net specification')
     return model
 
-def strategy_model_from_spec(strategy_spec):
+
+def strategy_from_spec(strategy_spec):
     try:
         start = strategy_spec['max']
         end = strategy_spec['min']

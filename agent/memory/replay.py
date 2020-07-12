@@ -3,9 +3,8 @@ import random
 
 # Create class to store the Experience objects
 class StandardReplayMemory():
-    def __init__(self, capacity, min_size_for_sampling):
+    def __init__(self, capacity):
         self.memory = deque(maxlen=capacity)
-        self.min_size = min_size_for_sampling
         
     def push(self, experience):
             self.memory.append(experience)
