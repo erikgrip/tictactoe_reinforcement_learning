@@ -25,13 +25,13 @@ def sequential_model_from_spec(net_spec):
         raise ValueError('Invalid net specification')
     return model
 
-def strategy_model_from_spec(strategy_spec):
+def strategy_from_spec(strategy_spec):
     try:
         start = strategy_spec['max']
         end = strategy_spec['min']
         decay = strategy_spec['decay']
     except:
-        pass
+        pass  # fix later
         
     if strategy_spec['type'] == 'EpsilonGreedyStrategy':
         strategy = EpsilonGreedyStrategy(start=start, end=end, decay=decay)
@@ -39,4 +39,20 @@ def strategy_model_from_spec(strategy_spec):
         strategy = MaxStrategy()
     elif strategy_spec['type'] == 'Boltzmann':
         strategy = Boltzmann(start=start, end=end, decay=decay)
+    else:
+        raise ValueError("Invalid strategy specification")
     return strategy
+
+def memory_from_spec(memory_spec):
+    try:
+        capacity = memory_spec['size']
+    except:
+        pass  # Fix later
+        
+    if memory_spec['type'] == 'StandardReplayMemory':
+        memory = StandardReplayMemory(capacity)
+    else:
+        raise ValueError("Invalid memory specification")
+    return memory
+    
+    
