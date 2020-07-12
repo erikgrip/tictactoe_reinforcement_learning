@@ -1,5 +1,5 @@
-from TicTacToeEnv import TicTacToe
-from RLAgent import Agent
+from env.tic_tac_toe_env import TicTacToe
+from tic_tac_toe.agent.agent import Agent
 import random
 import numpy as np
 from PIL import Image

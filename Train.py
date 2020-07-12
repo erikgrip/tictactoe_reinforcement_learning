@@ -1,9 +1,9 @@
-from GameManager import TicTacToeGameManager
-from RLAgent import Agent
-from Strategy import EpsilonGreedyStrategy, Boltzmann
-from ReplayMemory import StandardReplayMemory
-from Algorithm import DQN
-from TensorBoardMod import ModifiedTensorBoard
+from env.game_manager import TicTacToeGameManager
+from agent.agent import Agent
+from agent.algorithm.dqn import DQN
+from util.utils import (
+    sequential_model_from_spec, strategy_from_spec, memory_from_spec)
+from util.tensorboard_mod import ModifiedTensorBoard
 import os
 import time
 from tqdm import tqdm
@@ -11,7 +11,6 @@ from collections import namedtuple
 import shelve
 from keras.models import load_model
 import argparse
-from util.utils import sequential_model_from_spec
 
 default_spec = {
     'environment': {
