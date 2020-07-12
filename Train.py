@@ -18,9 +18,9 @@ default_spec = {
         'mode': 'random'
     },
     'strategy': {
-        'type': EpsilonGreedyStrategy,
-        'min': 1,
-        'max': 0,
+        'type': 'EpsilonGreedyStrategy',
+        'max': 1,
+        'min': 0,
         'decay': 0.001
     },
     'net': {
@@ -70,13 +70,20 @@ AGENT_MODEL = False
 
 # Environment settings
 OPPONENT_MODEL = False
-OPPONENT_RANDOM_RATE=0.5  # Apply when mode is 'model'. Between 0 and 1
-
 
 #  Model save and stats settings
 AGGREGATE_STATS_EVERY = 50  # episodes
 
 def main(spec):
+    
+    MODE = spec['environment']['mode']
+    MODEL_NAME = spec['net']['name']
+    EPISODES = spec['train']['num_episodes']
+    MIN_MEMORY = spec['train']['min_memory']
+    MINIBATCH_SIZE = spec['train']['minibatch_size']
+    DISCOUNT = spec['algorithm']['discount']
+    UPDATE_TARGET_EVERY = spec['algorithm']['target_net_update_freq']
+    
     # Create models folder
     if not os.path.isdir('models'):
         os.makedirs('models')
@@ -84,7 +91,7 @@ def main(spec):
         os.makedirs('replay_history')
         
     tensorboard = ModifiedTensorBoard(
-        log_dir=f"logs/{spec['net']['name']}-{int(time.time())}") 
+        log_dir=f"logs/{MODEL_NAME}-{int(time.time())}") 
     
     # We'll use experiences from replay memory to train the network.Include next 
     # valid action because else model won't know which future qvalues to discard
@@ -94,9 +101,9 @@ def main(spec):
          'next_state', 'next_valid_actions','is_terminal_state'))
                     
     
-    env = TicTacToeGameManager(mode=spec['environment']['mode'])
-    strategy = spec['strategy(MAX_EXPLORE, MIN_EXPLORE, EXPLORE_DECAY)
-    memory = StandardReplayMemory(REPLAY_MEMORY_SIZE, MIN_REPLAY_MEMORY_SIZE)        
+    env = TicTacToeGameManager(mode=MODE)
+    strategy = strategy_from_spec(spec['strategy'])
+    memory = memory_from_spec(spec['replay_memory'])      
     # Set up policy and target network
     if AGENT_MODEL:
         model = DQN(memory, saved_model=load_model(AGENT_MODEL))
@@ -204,9 +211,12 @@ def main(spec):
         
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('spec', required=True)
-    args = parser.parse_args()
+    
+    #parser = argparse.ArgumentParser()
+    #parser.add_argument('spec')
+    #args = parser.parse_args()
+    
+    args = default_spec  # Just for testing, remove later
     
     main(args)
 
