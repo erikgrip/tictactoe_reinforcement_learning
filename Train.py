@@ -58,9 +58,9 @@ default_spec = {
         'discount': 0.99
     },
     'train': {
-        'num_episodes': 10_000,
+        'num_episodes': 100,
         'minibatch_size': 64,
-        'min_memory': 500
+        'min_memory': 64
     }
 }
     
@@ -150,13 +150,14 @@ def main(spec):
             next_valid_actions = env.valid_actions()
             
             # Store experience in replay memory
-            model.memory.push(Experience(current_state/255, action, reward, 
+            memory.push(Experience(current_state/255, action, reward, 
                                    next_state/255, next_valid_actions, done))
             
             
             # Train model
             if memory.can_provide(MIN_MEMORY_TO_TRAIN):
-                model.train(batch_size=MINIBATCH_SIZE,
+                minibatch = memory.sample(MINIBATCH_SIZE)
+                model.train(minibatch,
                             discount=DISCOUNT, 
                             game_done=done,
                             callbacks=[tensorboard])

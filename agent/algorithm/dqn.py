@@ -40,28 +40,27 @@ class DQN():
         model.compile(optimizer=Adam(lr=0.001),
                       loss='mse', metrics=['accuracy'])
         return model
-    
-    def get_qs(self, model, states):
+
+    def __get_qs(self, model, states):
         return model.predict(
             # Use [-3:] not to predict on batch size dimension
             np.array(states).reshape(-1,*states.shape[-3:]))
     
-    def get_current_qs(self, states):
-        return self.get_qs(self.policy_model, states)
+    def get_policy_qs(self, states):
+        return self.__get_qs(self.policy_model, states)
     
-    def get_next_qs(self, states):
-        return self.get_qs(self.target_model, states)
+    def get_target_qs(self, states):
+        return self.__get_qs(self.target_model, states)
     
-    def train(self, batch_size, discount, game_done, callbacks=None):
-            experiences = self.memory.sample(batch_size)
+    def train(self, experiences, discount, game_done, callbacks=None):
             # Extract states, actions, rewards and next_states into 
             #their own tensors from a given Experience batch
             current_states = np.array(
                 [experience[0] for experience in experiences])
-            current_qs_list = self.get_qs(self.policy_model, current_states)
+            current_qs_list = self.get_policy_qs(current_states)
             new_states = np.array(
                 [experience[3] for experience in experiences])
-            future_qs_list = self.get_qs(self.target_model, new_states)
+            future_qs_list = self.get_target_qs(new_states)
          
             X = []
             y = []
@@ -87,11 +86,12 @@ class DQN():
                 X.append(state)
                 y.append(current_qs)
             
+            print(len(experiences))
             # Fit on all samples as one batch, log only on terminal state
             self.policy_model.model.fit(
                 np.array(X),
                 np.array(y),
-                batch_size=batch_size,
+                batch_size=len(experiences),
                 verbose=0,
                 shuffle=False,
                 callbacks=callbacks if game_done else None)
