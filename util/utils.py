@@ -6,23 +6,31 @@ from tic_tac_toe.agent.strategy.epsilon_greedy import EpsilonGreedyStrategy
 from tic_tac_toe.agent.strategy.boltzmann import Boltzmann
 from tic_tac_toe.agent.strategy.max_strategy import MaxStrategy
 from tic_tac_toe.agent.memory.replay import StandardReplayMemory
+from keras.models import load_model
 
 def sequential_model_from_spec(net_spec):
-    try:
-        d = {}
-        d['class_name'] = 'Sequential'
-        d['config'] = {'name': net_spec['name'],
-                       'layers': net_spec['layers']}
-        d['keras_version'] = net_spec['keras_version']
-        d['backend'] = 'tensorflow'
-        
-        j = json.dumps(d)
-        model = model_from_json(j)
-        model.compile(optimizer=Adam(lr=net_spec['lr']),
-                      loss=net_spec['loss'],
-                      metrics=['accuracy'])  # Make dynamic?
-    except:
-        raise ValueError('Invalid net specification')
+
+    if 'load_path' in net_spec:
+        try:
+            model = load_model(net_spec['load_path'])
+        except:
+            raise ValueError(f"Couldn't load model {net_spec['load_path']}")
+    else:
+        try:
+            d = {}
+            d['class_name'] = 'Sequential'
+            d['config'] = {'name': net_spec['name'],
+                           'layers': net_spec['layers']}
+            d['keras_version'] = net_spec['keras_version']
+            d['backend'] = 'tensorflow'
+
+            j = json.dumps(d)
+            model = model_from_json(j)
+            model.compile(optimizer=Adam(lr=net_spec['lr']),
+                          loss=net_spec['loss'],
+                          metrics=['accuracy'])  # Make dynamic?
+        except:
+            raise ValueError('Invalid net specification')
     return model
 
 

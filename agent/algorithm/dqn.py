@@ -2,45 +2,14 @@ from keras.models import  Sequential
 from keras.layers import Activation, Conv2D, Dense, Flatten, Dropout
 from keras.optimizers import Adam
 import numpy as np
+from tic_tac_toe.util.utils import sequential_model_from_spec
 
 class DQN():
-    def __init__(self, memory=None, in_dim=None, out_dim=None, 
-                 saved_model=None):
-        self.memory=memory
-        if saved_model == None:
-            self.out_dim = out_dim
-            self.policy_model = self.create_model(in_dim)
-            self.target_model = self.create_model(in_dim)
-            self.update_target_weights()
-        else:
-            self.policy_model = saved_model
-            self.target_model = saved_model
-            self.out_dim = self.policy_model.get_output_shape_at(-1)[1]
+    def __init__(self, net_spec):
+        self.policy_model = sequential_model_from_spec(net_spec)
+        self.target_model = sequential_model_from_spec(net_spec)
+        self.update_target_weights()
             
-    def create_model(self, in_dim):
-        model = Sequential()
-
-        model.add(Conv2D(256, (3, 3),  input_shape=in_dim))
-        model.add(Activation('relu'))
-        model.add(Dropout(0.1))
-
-        model.add(Conv2D(256, (3, 3), padding='same'))
-        model.add(Activation('relu'))
-        model.add(Dropout(0.1))
-        
-        model.add(Flatten())
-        '''
-        model.add(Flatten(input_shape=input_shape))
-        model.add(Dense(256))
-        model.add(Dense(256))
-        '''
-        
-        model.add(Dense(self.out_dim, activation='linear'))
-        
-        model.compile(optimizer=Adam(lr=0.001),
-                      loss='mse', metrics=['accuracy'])
-        return model
-
     def __get_qs(self, model, states):
         return model.predict(
             # Use [-3:] not to predict on batch size dimension
