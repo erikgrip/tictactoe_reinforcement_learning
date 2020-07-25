@@ -9,8 +9,8 @@ import time
 from tqdm import tqdm
 from collections import namedtuple
 import shelve
-from keras.models import load_model
 import argparse
+import json
 
 default_spec = {
     'environment': {
@@ -84,11 +84,13 @@ def main(spec):
     DISCOUNT = spec['algorithm']['discount']
     UPDATE_TARGET_EVERY = spec['algorithm']['target_net_update_freq']
     
-    # Create models folder
+    # Create output folders
     if not os.path.isdir('models'):
         os.makedirs('models')
     if not os.path.isdir('replay_history'):
         os.makedirs('replay_history')
+    if not os.path.isdir('specs'):
+        os.makedirs('specs')
         
     tensorboard = ModifiedTensorBoard(
         log_dir=f"logs/{MODEL_NAME}-{int(time.time())}") 
@@ -104,13 +106,7 @@ def main(spec):
     env = TicTacToeGameManager(mode=MODE)
     strategy = strategy_from_spec(spec['strategy'])
     memory = memory_from_spec(spec['replay_memory'])      
-    # Set up policy and target network
-    if AGENT_MODEL:
-        model = DQN(memory, saved_model=load_model(AGENT_MODEL))
-    else:
-        model = DQN(memory=memory, 
-                    in_dim=env.obs_space_size(), 
-                    out_dim=env.action_space_size())
+    model = DQN(default_spec['net'])
     agent = Agent(strategy, model)
     
     '''             
@@ -196,9 +192,14 @@ def main(spec):
                                      exploration_parameter=explore_param)
     
     # Save model
-    model_name = f"models/{MODEL_NAME}_{average_reward:_>7.2f}avg_" \
+    model_file_name = f"models/{MODEL_NAME}_{average_reward:_>7.2f}avg_" \
         + f"{min_reward:_>7.2f}min_{int(time.time())}.model"
-    model.policy_model.model.save(model_name)
+    model.policy_model.model.save(model_file_name)
+    
+    # Save spec with name matching models
+    spec_file_name = f"specs/{MODEL_NAME}_{int(time.time())}_spec.json"
+    with open(spec_file_name, 'w') as json_file:
+        json.dump(spec, json_file)
     
     # Keep games if player manually
     if MODE == 'human':
