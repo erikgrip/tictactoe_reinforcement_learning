@@ -53,6 +53,7 @@ class DQN():
         return self.__get_qs(self.target_model, states)
     
     def train(self, experiences, discount, game_done, callbacks=None):
+            batch_size = len(experiences)
             # Extract states, actions, rewards and next_states into 
             #their own tensors from a given Experience batch
             current_states = np.array(
@@ -85,13 +86,12 @@ class DQN():
                 
                 X.append(state)
                 y.append(current_qs)
-            
-            print(len(experiences))
+
             # Fit on all samples as one batch, log only on terminal state
             self.policy_model.model.fit(
                 np.array(X),
                 np.array(y),
-                batch_size=len(experiences),
+                batch_size=batch_size,
                 verbose=0,
                 shuffle=False,
                 callbacks=callbacks if game_done else None)

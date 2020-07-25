@@ -9,7 +9,7 @@ class Agent:
         return self.strategy.get_exploration_rate(self.current_step)
     
     def get_action(self, state, valid_actions):
-        qs = self.model.get_current_qs(state)[0]
+        qs = self.model.get_policy_qs(state)[0]
         qs = list(enumerate(qs))  # Assuming 0 based action space
         # Pass only valid actions, with their q values (a, q)
         valid_qs = np.array([a_q for a_q in qs if a_q[0] in valid_actions])
