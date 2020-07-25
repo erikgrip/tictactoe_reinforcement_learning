@@ -1,5 +1,6 @@
 logs/
 models/
+specs/
 test.py
 __pycache__/
 replay_history/
