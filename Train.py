@@ -1,9 +1,10 @@
 from env.game_manager import TicTacToeGameManager
 from agent.agent import Agent
 from agent.algorithm.dqn import DQN
+from agent.strategy.max_strategy import MaxStrategy
 from util.utils import (
     sequential_model_from_spec, strategy_from_spec, memory_from_spec,
-    spec_search_combinations)
+    param_search_df_from_spec, df_row_to_spec)
 from util.tensorboard_mod import ModifiedTensorBoard
 import os
 import time
@@ -13,19 +14,20 @@ import shelve
 import argparse
 import json
 
-default_spec = {
+train_spec = {
     'environment': {
         'name': 'TicTacToeGameManager',
         'mode': 'random'
     },
     'strategy': {
-        'type': 'EpsilonGreedyStrategy',
-        'max': 1,
-        'min': 0,
-        'decay': 0.001
+        'type':['Boltzmann', 'EpsilonGreedyStrategy'],
+        'max': [0.5, 1, 5],
+        'min': [0, 0.025, 0.1],
+        'decay': [0.0005, 0.001, 0.005]
     },
     'net': {
-        'name': 'my_model',
+        #'load_path': 'models/2x256c_EpsG_vsrandom____0.46avg___-1.00min_1593277776.model',
+        'name': 'search2xDen',
         'layers':  [
             {'class_name': 'Flatten',
              'config': 
@@ -34,44 +36,77 @@ default_spec = {
             },
             {'class_name': 'Dense',
              'config': 
-                 {'units': [8, 16, 32, 64, 128],
-	              'activation': 'relu'
+                 {'units': [16, 64, 128],
+	              'activation': ['relu', 'sigmoid'],
+                  "kernel_initializer": 
+                      ['glorot_uniform', 'zeros']
+                  }
+            },
+            {'class_name': 'Dropout',
+             'config': 
+                 {'rate': [0, 0.05]
                   }
             },
             {'class_name': 'Dense',
              'config': 
-                 {'units': [8, 16, 32, 64, 128],
-                  'activation': 'relu'
+                 {'units': [16, 64, 128],
+                  'activation': ['relu', 'sigmoid'],
+                  "kernel_initializer": 
+                      ['glorot_uniform', 'zeros']
+                  }
+            },
+            {'class_name': 'Dropout',
+             'config': 
+                 {'rate': [0, 0.05]
                   }
             },
             {'class_name': 'Dense',
              'config': 
                  {'units': 9,
-                  'activation': 'softmax'
+                  'activation': 'linear'
                   }
             }
         ],
-        'lr':  [0.05, 0.01, 0.005, 0.001],
-        'loss': 'mse',
+        'lr':  [0.0005, 0.001, 0.005],
+        'loss': ['mse', 'huber_loss'],
         'keras_version': '2.3.1'
     },
     'replay_memory': {
         'type': 'StandardReplayMemory',
-        'size': 50_000
+        'size': [50_000, 100_000],
+        'minibatch_size': [64, 128],
+        'min_memory': [128, 1_000]
     },
     'algorithm': {
         'type': 'DQN',
-        'target_net_update_freq': 2_500,
-        'discount': 0.99
+        'target_net_update_freq': [100, 1_000, 10_000],
+        'discount': [0.9, 0.99]
     },
-    'train': {
-        'num_episodes': 10_000,
-        'minibatch_size': 128,
-        'min_memory': 128
+    'run': {
+        'mode': 'train',
+        'num_episodes': 20_000
     },
     'search': {
-        'max_combinations': 10
+        'max_combinations': 100
         }
+}
+    
+score_spec = {
+    'environment': {
+        'name': 'TicTacToeGameManager',
+        'mode': 'random'
+    },
+    'strategy': {
+        'type': 'MaxStrategy'
+    },
+    'net': {
+        #'load_path': 'models/2x256c_EpsG_vsrandom____0.46avg___-1.00min_1593277776.model',
+        'name': 'searchReg'
+    },
+    'run': {
+        'mode': 'test',
+        'num_episodes': 500,
+    },
 }
     
 
@@ -85,18 +120,23 @@ OPPONENT_MODEL = False
 AGGREGATE_STATS_EVERY = 50  # episodes
 
 def main(input_spec):
-    spec_list = spec_search_combinations(input_spec)
+    param_df = param_search_df_from_spec(input_spec)
+    param_df['eval_avg'] = None  # For keeping evaluation run result
+    PARAM_DF_EVAL_WINDOW = 1_000  # Evaluate on last 2k episodes i train run
     
     # Loop over sample of parameter combinations from input spec
-    for spec in spec_list:
-    
-        MODE = spec['environment']['mode']
-        MODEL_NAME = spec['net']['name']
-        EPISODES = spec['train']['num_episodes']
-        MIN_MEMORY_TO_TRAIN = spec['train']['min_memory']
-        MINIBATCH_SIZE = spec['train']['minibatch_size']
+    for df_index, df_row in param_df.iterrows():
+        
+        spec = df_row_to_spec(df_row.drop('eval_avg'))
+        
+        ENV_MODE = spec['environment']['mode']
+        RUN_MODE = spec['run']['mode']
+        EPISODES = spec['run']['num_episodes']
+        MIN_MEMORY_TO_TRAIN = spec['replay_memory']['min_memory']
+        MINIBATCH_SIZE = spec['replay_memory']['minibatch_size']
         DISCOUNT = spec['algorithm']['discount']
         UPDATE_TARGET_EVERY = spec['algorithm']['target_net_update_freq']
+        MODEL_NAME = spec['net']['name']
         
         # Create output folders
         if not os.path.isdir('models'):
@@ -175,21 +215,21 @@ def main(input_spec):
                 # Get epsilon and update rewards and state
                 episode_reward += reward
                 current_state = next_state
-                explore_param = agent.strategy.get_decayed_rate() 
                 
             # Append episode reward to a list and log stats
             ep_rewards.append(episode_reward)
             
             # Keep game if played against human
-            if MODE == 'human':
+            if ENV_MODE == 'human':
                 saved_games.append(env.game_history)
                 
             # Update target net to equal policy net
             if episode % UPDATE_TARGET_EVERY == 0:
                 model.update_target_weights()
                 
-            # Update tensorboard and save model
+            # Update tensorboard
             if not episode % AGGREGATE_STATS_EVERY or episode == 1:
+                explore_param = agent.strategy.get_decayed_rate() 
                 new_rews = ep_rewards[-AGGREGATE_STATS_EVERY:]
                 average_reward = sum(new_rews) / len(new_rews)
                 min_reward = min(new_rews)
@@ -216,7 +256,7 @@ def main(input_spec):
             json.dump(spec, json_file)
         
         # Keep games if player manually
-        if MODE == 'human':
+        if ENV_MODE == 'human':
             # Save replay memory to file
             replay_history = shelve.open("replay_history/replay_history")
             games_db = shelve.open("replay_history/saved_games") 
@@ -224,6 +264,40 @@ def main(input_spec):
             games_db[f"{MODEL_NAME}_{int(time.time())}"] = saved_games
             replay_history.close()
             games_db.close()
+            
+        # Evaluation run
+        agent = Agent(MaxStrategy(), model)
+        for episode in range(1, PARAM_DF_EVAL_WINDOW+1):
+                episode_reward = 0
+                current_state = env.reset()
+                
+                done = False
+                while not done:
+                    # Select and perform action
+                    action = agent.get_action(current_state, env.valid_actions())
+                    next_state, reward, done = env.step(action)
+                    
+                    # Make opponent move
+                    if not done:
+                        env_action = env.get_env_action(next_state)
+                        next_state, reward, done = env.step(env_action)
+                        reward = -reward  # Assuming symmetric rewards
+                        
+                    next_valid_actions = env.valid_actions()
+                    
+                    # Get epsilon and update rewards and state
+                    episode_reward += reward
+                    current_state = next_state
+                    
+                # Append episode reward to a list and log stats
+                ep_rewards.append(episode_reward)
+        eval_reward_avg = sum(ep_rewards) / len(ep_rewards)
+        param_df.loc[df_index, 'eval_avg'] = eval_reward_avg
+        
+        param_df.to_csv('param_df.csv', index=False)
+    
+
+        
         
 
 if __name__ == '__main__':
@@ -232,7 +306,7 @@ if __name__ == '__main__':
     #parser.add_argument('spec')
     #args = parser.parse_args()
     
-    args = default_spec  # Just for testing, remove later
+    args = train_spec  # Just for testing, remove later
     
     main(args)
 
