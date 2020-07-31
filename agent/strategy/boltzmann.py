@@ -9,7 +9,11 @@ class Boltzmann(BaseStratregy):
         # As defined by Graessner anf Keng p.86. 
         tau = self.get_decayed_rate()
         tau = np.max([tau, 0.001])  # Tau=0 will lead to division by zero
-        ps = (np.exp(aq_pairs[:, 1])/tau) / (np.exp(aq_pairs[:, 1]).sum()/tau)
+        qs = np.array(aq_pairs[:, 1])
+        # Normalize to avoid overflow. The output probability is 
+        # insensible to shifts in values of qs
+        qs = qs - qs.max()
+        ps = (np.exp(qs/tau)) / (np.exp(qs/tau).sum())
         return ps
     
     def select_action(self, aq_pairs):
