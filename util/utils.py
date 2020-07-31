@@ -46,6 +46,8 @@ def strategy_from_spec(strategy_spec):
         pass
         
     if strategy_spec['type'] == 'EpsilonGreedyStrategy':
+        if start > 1:
+            start = 1  # When param searching Botlzmann range might go in here
         strategy = EpsilonGreedyStrategy(start=start, end=end, decay=decay)
     elif strategy_spec['type'] == 'MaxStrategy':
         strategy = MaxStrategy()

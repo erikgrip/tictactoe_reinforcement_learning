@@ -157,7 +157,7 @@ def main(input_spec):
              'next_state', 'next_valid_actions','is_terminal_state'))
                         
         
-        env = TicTacToeGameManager(mode=MODE)
+        env = TicTacToeGameManager(mode=ENV_MODE)
         strategy = strategy_from_spec(spec['strategy'])
         memory = memory_from_spec(spec['replay_memory'])      
         model = DQN(spec['net'])
@@ -246,8 +246,7 @@ def main(input_spec):
                                          exploration_parameter=explore_param)
         
         # Save model
-        model_file_name = f"models/{MODEL_NAME}_{average_reward:_>7.2f}avg_" \
-            + f"{min_reward:_>7.2f}min_{int(time.time())}.model"
+        model_file_name = f"models/{MODEL_NAME}_{int(time.time())}.model"
         model.policy_model.model.save(model_file_name)
         
         # Save spec with name matching models
