@@ -47,7 +47,7 @@ def strategy_from_spec(strategy_spec):
         
     if strategy_spec['type'] == 'EpsilonGreedyStrategy':
         if start > 1:
-            start = 1  # When param searching Botlzmann range might go in here
+            start = 1  # In param search Boltzmann T range might go in here
         strategy = EpsilonGreedyStrategy(start=start, end=end, decay=decay)
     elif strategy_spec['type'] == 'MaxStrategy':
         strategy = MaxStrategy()
@@ -70,6 +70,7 @@ def memory_from_spec(memory_spec):
 
 
 def _spec_to_df(spec):
+    ''' Takes spec and returns a df with one row per parameter combination'''
     # Help function for flattening nested dict
     def flatten(input_dict, sep='.', prefix=''):
         out_dict = {}
@@ -88,11 +89,21 @@ def _spec_to_df(spec):
                 out_dict[prefix+k] = v
         return out_dict
     
+    # Read spec to one-row df
     d = flatten(spec)
     df = pd.DataFrame.from_dict(d, orient='index').transpose()
+    
+    # Transform to one row for each possible parameter combination
+    for col in df.columns:
+        if not col == 'net.layers.1.config.input_shape':  # Leave input shape
+            df = df.explode(col)
+    df = df.reset_index(drop=True)
     return df
 
-def _df_to_spec(df):
+
+def df_row_to_spec(pd_series):
+    ''' Takes a pandas Series (read row from spec combinations df) and
+        returns a nested spec dictionary '''
     # Help function for recursively nesting flat dict by key separator
     def _nest_dict_rec(k, v, out, separator):
         k, *rest = k.split(separator, 1)
@@ -107,40 +118,31 @@ def _df_to_spec(df):
             _nest_dict_rec(k, v, result, separator)
         return result
     
-    d = df.transpose().to_dict()[0]
+    d = pd_series.transpose().to_dict()
     d = nest_dict(d)
-    # Remove layer enumaration addded in spec_to_df
+    # Remove layer enumaration added in spec_to_df
     if 'layers' in d['net'].keys():
         d['net']['layers'] = [v for k, v in d['net']['layers'].items()]
     return d
 
 
-def spec_search_combinations(spec_in):
-    ''' Takes a spec file (possibly) with iterable parameter values over which
-        to search. Returns a list of spec dictionaries with only scalar values.
-        The output list holds maximum number of specs determined by 
-        spec['search']['max_combinations']. Returned specs are sampled from 
-        all possible combinations '''
-    specs_out = []
+def param_search_df_from_spec(spec_in):
+    ''' Takes a spec file with iterable parameter values (possibly) over which
+        to search. Returns a pandas dataframe that holds a number of 
+        parameter combintations set by spec['search']['max_combinations']'''
     df = _spec_to_df(spec_in)
 
-    # Get all possible combinations of parameters from spec
-    for col in df.columns:
-        if not col == 'net.layers.1.config.input_shape':  # Leave input shape
-            df = df.explode(col)
-
     if len(df) == 1:
-        return [spec_in]  # Return input spec if no values to search over
+        return df  # Always return df if no values to search over
     else:
         try:
-            max_num_specs_out = spec_in['search']['max_combinations']
+            max_num_param_combos = spec_in['search']['max_combinations']
         except:
-            raise ValueError('Specify number of parameter combinations to search')
+            raise ValueError('Set number of parameter combinations to search')
             
-        sample = df.sample(np.min([max_num_specs_out, len(df)]))
-        for index, row in sample.iterrows():
-            spec = _df_to_spec(pd.DataFrame(data=[row]))
-            specs_out.append(spec)
-    return specs_out
+        sample_size = np.min([max_num_param_combos, len(df)])
+        df_subset = df.sample(sample_size).reset_index(drop=True)
+    return df_subset
+
     
     
