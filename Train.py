@@ -27,7 +27,7 @@ train_spec = {
     },
     'net': {
         #'load_path': 'models/2x256c_EpsG_vsrandom____0.46avg___-1.00min_1593277776.model',
-        'name': 'search2xDen',
+        'name': '2xDen',
         'layers':  [
             {'class_name': 'Flatten',
              'config': 
@@ -124,6 +124,8 @@ def main(input_spec):
     param_df['eval_avg'] = None  # For keeping evaluation run result
     PARAM_DF_EVAL_WINDOW = 1_000  # Evaluate on last 2k episodes i train run
     
+    search_timestamp = int(time.time())
+    
     # Loop over sample of parameter combinations from input spec
     for df_index, df_row in param_df.iterrows():
         
@@ -145,9 +147,10 @@ def main(input_spec):
             os.makedirs('replay_history')
         if not os.path.isdir('specs'):
             os.makedirs('specs')
-            
+        
+        model_timestamp = int(time.time())
         tensorboard = ModifiedTensorBoard(
-            log_dir=f"logs/{MODEL_NAME}-{int(time.time())}") 
+            log_dir=f"logs/{search_timestamp}/{MODEL_NAME}-{model_timestamp}") 
         
         # Include next valid action because else model won't know 
         # which future qvalues to discard
@@ -246,11 +249,11 @@ def main(input_spec):
                                          exploration_parameter=explore_param)
         
         # Save model
-        model_file_name = f"models/{MODEL_NAME}_{int(time.time())}.model"
+        model_file_name = f"models/{MODEL_NAME}_{model_timestamp}.model"
         model.policy_model.model.save(model_file_name)
         
         # Save spec with name matching models
-        spec_file_name = f"specs/{MODEL_NAME}_{int(time.time())}_spec.json"
+        spec_file_name = f"specs/{MODEL_NAME}_{model_timestamp}_spec.json"
         with open(spec_file_name, 'w') as json_file:
             json.dump(spec, json_file)
         
@@ -259,8 +262,8 @@ def main(input_spec):
             # Save replay memory to file
             replay_history = shelve.open("replay_history/replay_history")
             games_db = shelve.open("replay_history/saved_games") 
-            replay_history[f"{MODEL_NAME}_{int(time.time())}"] = memory.memory
-            games_db[f"{MODEL_NAME}_{int(time.time())}"] = saved_games
+            replay_history[f"{MODEL_NAME}_{model_timestamp}"] = memory.memory
+            games_db[f"{MODEL_NAME}_{model_timestamp}"] = saved_games
             replay_history.close()
             games_db.close()
             
@@ -293,7 +296,8 @@ def main(input_spec):
         eval_reward_avg = sum(ep_rewards) / len(ep_rewards)
         param_df.loc[df_index, 'eval_avg'] = eval_reward_avg
         
-        param_df.to_csv('param_df.csv', index=False)
+    param_df.to_csv(f"param_search/{MODEL_NAME}-{search_timestamp}.csv",
+                    index=False)
     
 
         
