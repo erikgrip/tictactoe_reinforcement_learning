@@ -1,0 +1,70 @@
+{
+    "environment": {
+        "name": "TicTacToeGameManager", 
+        "mode": "random"
+    }, 
+    "strategy": {
+        "type": "Boltzmann",
+        "max": 1,
+        "min": [0.05, 0.1, 0.2],
+        "decay": [0.001, 0.005]
+    }, 
+    "net": {
+        "name": "2xDen",
+        "layers": [{
+            "class_name": "Flatten", 
+            "config": {
+                "input_shape": [3, 3, 1]}
+            },
+            {
+            "class_name": "Dense", 
+            "config": {
+                "units": [128, 256],
+                "activation": "relu",
+                "kernel_initializer": "glorot_uniform"}
+            },
+            {
+            "class_name": "Dropout",
+            "config": {"rate": 0}
+            },
+            {
+            "class_name": "Dense",
+                "config": {
+                    "units": [128, 256],
+                    "activation": "relu",
+                    "kernel_initializer": "glorot_uniform"}
+            },
+            {
+            "class_name": "Dropout",
+            "config": {
+                "rate": [0.05, 0,1, 0.15]}
+            },
+            {
+            "class_name": "Dense",
+            "config": {
+                "units": 9,
+                "activation": "linear"}
+            }],
+        "lr": [0.0005, 0,001, 0.005], 
+        "loss": "huber",
+        "keras_version": "2.3.1"
+    },
+    "replay_memory": {
+        "type": "StandardReplayMemory",
+        "size": [25000, 50000, 75000],
+        "minibatch_size": [32, 64, 128],
+        "min_memory": 128
+    },
+    "algorithm": {
+        "type": "DQN",
+        "target_net_update_freq": [100, 1000],
+        "discount": 0.99
+    },
+    "run": {
+        "mode": "train",
+        "num_episodes": 30000
+    },
+    "search": {
+        "max_combinations": 200
+    }
+}

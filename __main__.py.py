@@ -14,102 +14,6 @@ import shelve
 import argparse
 import json
 
-train_spec = {
-    'environment': {
-        'name': 'TicTacToeGameManager',
-        'mode': 'random'
-    },
-    'strategy': {
-        'type':['Boltzmann', 'EpsilonGreedyStrategy'],
-        'max': [0.5, 1, 5],
-        'min': [0, 0.025, 0.1],
-        'decay': [0.0005, 0.001, 0.005]
-    },
-    'net': {
-        #'load_path': 'models/2x256c_EpsG_vsrandom____0.46avg___-1.00min_1593277776.model',
-        'name': '2xDen',
-        'layers':  [
-            {'class_name': 'Flatten',
-             'config': 
-                 {'input_shape': (3,3,1),  # Make dynamic by ref to env.obs_size
-                  }
-            },
-            {'class_name': 'Dense',
-             'config': 
-                 {'units': [16, 64, 128],
-	              'activation': ['relu', 'sigmoid'],
-                  "kernel_initializer": 
-                      ['glorot_uniform', 'zeros']
-                  }
-            },
-            {'class_name': 'Dropout',
-             'config': 
-                 {'rate': [0, 0.05]
-                  }
-            },
-            {'class_name': 'Dense',
-             'config': 
-                 {'units': [16, 64, 128],
-                  'activation': ['relu', 'sigmoid'],
-                  "kernel_initializer": 
-                      ['glorot_uniform', 'zeros']
-                  }
-            },
-            {'class_name': 'Dropout',
-             'config': 
-                 {'rate': [0, 0.05]
-                  }
-            },
-            {'class_name': 'Dense',
-             'config': 
-                 {'units': 9,
-                  'activation': 'linear'
-                  }
-            }
-        ],
-        'lr':  [0.0005, 0.001, 0.005],
-        'loss': ['mse', 'huber_loss'],
-        'keras_version': '2.3.1'
-    },
-    'replay_memory': {
-        'type': 'StandardReplayMemory',
-        'size': [50_000, 100_000],
-        'minibatch_size': [64, 128],
-        'min_memory': [128, 1_000]
-    },
-    'algorithm': {
-        'type': 'DQN',
-        'target_net_update_freq': [100, 1_000, 10_000],
-        'discount': [0.9, 0.99]
-    },
-    'run': {
-        'mode': 'train',
-        'num_episodes': 20_000
-    },
-    'search': {
-        'max_combinations': 100
-        }
-}
-    
-score_spec = {
-    'environment': {
-        'name': 'TicTacToeGameManager',
-        'mode': 'random'
-    },
-    'strategy': {
-        'type': 'MaxStrategy'
-    },
-    'net': {
-        #'load_path': 'models/2x256c_EpsG_vsrandom____0.46avg___-1.00min_1593277776.model',
-        'name': 'searchReg'
-    },
-    'run': {
-        'mode': 'test',
-        'num_episodes': 500,
-    },
-}
-    
-
 # Model path or False to create new models
 AGENT_MODEL = False
 
@@ -305,13 +209,11 @@ def main(input_spec):
 
 if __name__ == '__main__':
     
-    #parser = argparse.ArgumentParser()
-    #parser.add_argument('spec')
-    #args = parser.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('spec')
+    args = parser.parse_args()
     
-    args = train_spec  # Just for testing, remove later
-    
-    main(args)
+    main(args.spec)
 
     
     
