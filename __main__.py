@@ -1,12 +1,13 @@
-from env.game_manager import TicTacToeGameManager
-from agent.agent import Agent
-from agent.algorithm.dqn import DQN
-from agent.strategy.max_strategy import MaxStrategy
-from util.utils import (
+from tic_tac_toe.env.game_manager import TicTacToeGameManager
+from tic_tac_toe.agent.agent import Agent
+from tic_tac_toe.agent.algorithm.dqn import DQN
+from tic_tac_toe.agent.strategy.max_strategy import MaxStrategy
+from tic_tac_toe.util.utils import (
     sequential_model_from_spec, strategy_from_spec, memory_from_spec,
     param_search_df_from_spec, df_row_to_spec)
-from util.tensorboard_mod import ModifiedTensorBoard
+from tic_tac_toe.util.tensorboard_mod import ModifiedTensorBoard
 import os
+from pathlib import Path
 import time
 from tqdm import tqdm
 from collections import namedtuple
@@ -24,6 +25,7 @@ OPPONENT_MODEL = False
 AGGREGATE_STATS_EVERY = 50  # episodes
 
 def main(input_spec):
+
     param_df = param_search_df_from_spec(input_spec)
     param_df['eval_avg'] = None  # For keeping evaluation run result
     PARAM_DF_EVAL_WINDOW = 1_000  # Evaluate on last 2k episodes i train run
@@ -44,17 +46,21 @@ def main(input_spec):
         UPDATE_TARGET_EVERY = spec['algorithm']['target_net_update_freq']
         MODEL_NAME = spec['net']['name']
         
+        pkg_path = str(Path(__file__).parent.absolute() / "tic_tac_toe/")
+        print(pkg_path)
         # Create output folders
-        if not os.path.isdir('models'):
-            os.makedirs('models')
-        if not os.path.isdir('replay_history'):
-            os.makedirs('replay_history')
-        if not os.path.isdir('specs'):
-            os.makedirs('specs')
+        if not os.path.isdir(pkg_path + '/models'):
+            os.makedirs(pkg_path + '/models')
+        if not os.path.isdir(pkg_path + '/replay_history'):
+            os.makedirs(pkg_path + '/replay_history')
+        if not os.path.isdir(pkg_path + '/specs'):
+            os.makedirs(pkg_path + '/specs')
+        if not os.path.isdir(pkg_path + '/param_search'):
+            os.makedirs(pkg_path + '/param_search')
         
         model_timestamp = int(time.time())
         tensorboard = ModifiedTensorBoard(
-            log_dir=f"logs/{search_timestamp}/{MODEL_NAME}-{model_timestamp}") 
+            log_dir=f"{pkg_path}/logs/{search_timestamp}/{MODEL_NAME}-{model_timestamp}") 
         
         # Include next valid action because else model won't know 
         # which future qvalues to discard
@@ -73,7 +79,7 @@ def main(input_spec):
         '''             
         if MODE == 'human':
             # Load saved games into replay memory
-            saved_states = shelve.open("replay_history/replay_history") 
+            saved_states = shelve.open(pkg_path + "/replay_history/replay_history") 
             for key in saved_states.keys():
                 try:
                     for experience in saved_states[key]:
@@ -153,19 +159,19 @@ def main(input_spec):
                                          exploration_parameter=explore_param)
         
         # Save model
-        model_file_name = f"models/{MODEL_NAME}_{model_timestamp}.model"
+        model_file_name = f"{pkg_path}/models/{MODEL_NAME}_{model_timestamp}.model"
         model.policy_model.model.save(model_file_name)
         
         # Save spec with name matching models
-        spec_file_name = f"specs/{MODEL_NAME}_{model_timestamp}_spec.json"
+        spec_file_name = f"{pkg_path}/specs/{MODEL_NAME}_{model_timestamp}_spec.json"
         with open(spec_file_name, 'w') as json_file:
             json.dump(spec, json_file)
         
         # Keep games if player manually
         if ENV_MODE == 'human':
             # Save replay memory to file
-            replay_history = shelve.open("replay_history/replay_history")
-            games_db = shelve.open("replay_history/saved_games") 
+            replay_history = shelve.open(f"{pkg_path}/replay_history/replay_history")
+            games_db = shelve.open(f"{pkg_path}/replay_history/saved_games") 
             replay_history[f"{MODEL_NAME}_{model_timestamp}"] = memory.memory
             games_db[f"{MODEL_NAME}_{model_timestamp}"] = saved_games
             replay_history.close()
@@ -200,7 +206,7 @@ def main(input_spec):
         eval_reward_avg = sum(ep_rewards) / len(ep_rewards)
         param_df.loc[df_index, 'eval_avg'] = eval_reward_avg
         
-    param_df.to_csv(f"param_search/{MODEL_NAME}-{search_timestamp}.csv",
+    param_df.to_csv(f"{pkg_path}/param_search/{MODEL_NAME}-{search_timestamp}.csv",
                     index=False)
     
 
@@ -213,7 +219,10 @@ if __name__ == '__main__':
     parser.add_argument('spec')
     args = parser.parse_args()
     
-    main(args.spec)
+    with open(args.spec, 'r') as json_file:
+        spec = json.load(json_file)
+    
+    main(spec)
 
     
     
