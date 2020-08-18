@@ -5,3 +5,4 @@ param_search/
 __pycache__/
 replay_history/
 test.py
+*-checkpoint.*
