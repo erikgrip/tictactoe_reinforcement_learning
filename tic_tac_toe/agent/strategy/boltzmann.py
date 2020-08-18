@@ -1,4 +1,4 @@
-from tic_tac_toe.agent.strategy.base import BaseStratregy
+from agent.strategy.base import BaseStratregy
 import numpy as np
 
 class Boltzmann(BaseStratregy):
