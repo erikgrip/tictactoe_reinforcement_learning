@@ -1,4 +1,4 @@
-from agent.strategy.base import BaseStratregy
+from tic_tac_toe.agent.strategy.base import BaseStratregy
 import numpy as np
 
 class EpsilonGreedyStrategy(BaseStratregy):
