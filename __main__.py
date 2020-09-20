@@ -47,16 +47,11 @@ def main(input_spec):
         MODEL_NAME = spec['net']['name']
         
         pkg_path = str(Path(__file__).parent.absolute() / "tic_tac_toe/")
-        print(pkg_path)
         # Create output folders
-        if not os.path.isdir(pkg_path + '/models'):
-            os.makedirs(pkg_path + '/models')
-        if not os.path.isdir(pkg_path + '/replay_history'):
-            os.makedirs(pkg_path + '/replay_history')
-        if not os.path.isdir(pkg_path + '/specs'):
-            os.makedirs(pkg_path + '/specs')
-        if not os.path.isdir(pkg_path + '/param_search'):
-            os.makedirs(pkg_path + '/param_search')
+        folders = ['/models', '/replay_history', '/specs', '/param_search']
+        for folder in folders:
+            if not os.path.isdir(pkg_path + folder):
+                os.makedirs(pkg_path + folder)
         
         model_timestamp = int(time.time())
         tensorboard = ModifiedTensorBoard(
