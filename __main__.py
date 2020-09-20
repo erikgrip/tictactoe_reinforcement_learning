@@ -71,19 +71,6 @@ def main(input_spec):
         model = DQN(spec['net'])
         agent = Agent(strategy, model)
         
-        '''             
-        if MODE == 'human':
-            # Load saved games into replay memory
-            saved_states = shelve.open(pkg_path + "/replay_history/replay_history") 
-            for key in saved_states.keys():
-                try:
-                    for experience in saved_states[key]:
-                        agent.model.memory.push(experience)
-                except EOFError:
-                    pass 
-            saved_states.close()
-        '''
-            
         # Loop over episodes
         saved_games = []
         ep_rewards = [] 
