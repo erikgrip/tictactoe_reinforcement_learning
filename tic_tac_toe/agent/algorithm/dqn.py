@@ -18,9 +18,6 @@ class DQN():
     def get_policy_qs(self, states) -> np.array:
         return self._get_qs(self.policy_model, states)
 
-    def get_target_qs(self, states) -> np.array:
-        return self._get_qs(self.target_model, states)
-
     def train(self, experiences, game_done, callbacks=None):
             batch_size = len(experiences)
             # Extract states, actions, rewards and next_states into
