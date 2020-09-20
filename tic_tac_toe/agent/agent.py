@@ -5,9 +5,6 @@ class Agent:
         self.strategy = strategy
         self.model = model
 
-    def get_current_epsilon(self):
-        return self.strategy.get_exploration_rate(self.current_step)
-
     def get_action(self, state, valid_actions):
         qs = self.model.get_policy_qs(state)[0]
         aqs = list(enumerate(qs))  # Assuming 0 based action space
