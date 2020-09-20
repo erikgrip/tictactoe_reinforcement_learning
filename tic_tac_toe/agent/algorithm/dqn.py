@@ -2,13 +2,13 @@ from keras.models import  Sequential
 from keras.layers import Activation, Conv2D, Dense, Flatten, Dropout
 from keras.optimizers import Adam
 import numpy as np
-from tic_tac_toe.util.utils import sequential_model_from_spec
 
 class DQN():
-    def __init__(self, net_spec):
-        self.policy_model = sequential_model_from_spec(net_spec)
-        self.target_model = sequential_model_from_spec(net_spec)
+    def __init__(self, policy_model, target_model, discount):
+        self.policy_model = policy_model
+        self.target_model = target_model
         self.update_target_weights()
+        self.discount = discount
             
     def __get_qs(self, model, states):
         return model.predict(
@@ -21,7 +21,7 @@ class DQN():
     def get_target_qs(self, states):
         return self.__get_qs(self.target_model, states)
     
-    def train(self, experiences, discount, game_done, callbacks=None):
+    def train(self, experiences, game_done, callbacks=None):
             batch_size = len(experiences)
             # Extract states, actions, rewards and next_states into 
             #their own tensors from a given Experience batch
@@ -46,7 +46,7 @@ class DQN():
                     mask = np.zeros(future_qs.shape[0], dtype=int)
                     mask[next_valid] = 1
                     max_future_q = np.max(future_qs[mask == True])    
-                    new_q = reward + discount * max_future_q     
+                    new_q = reward + self.discount * max_future_q
                 else:
                     new_q = reward
                     
