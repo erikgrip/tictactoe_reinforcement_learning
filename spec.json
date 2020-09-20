@@ -37,7 +37,7 @@
             {
             "class_name": "Dropout",
             "config": {
-                "rate": [0.05, 0,1, 0.15]}
+                "rate": [0.05, 0.1, 0.15]}
             },
             {
             "class_name": "Dense",
@@ -45,8 +45,8 @@
                 "units": 9,
                 "activation": "linear"}
             }],
-        "lr": [0.0005, 0,001, 0.005], 
-        "loss": "huber",
+        "lr": [0.0005, 0.001, 0.005], 
+        "loss": "huber_loss",
         "keras_version": "2.3.1"
     },
     "replay_memory": {
@@ -65,6 +65,6 @@
         "num_episodes": 30000
     },
     "search": {
-        "max_combinations": 200
+        "max_combinations": 1
     }
 }
