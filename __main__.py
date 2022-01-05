@@ -97,10 +97,6 @@ def main(input_spec):
             # Append episode reward to a list and log stats
             ep_rewards.append(episode_reward)
 
-            # Keep game if played against human
-            if ENV_MODE == 'human':
-                saved_games.append(env.game_history)
-
             # Update target net to equal policy net
             if episode % UPDATE_TARGET_EVERY == 0:
                 model.update_target_weights()
