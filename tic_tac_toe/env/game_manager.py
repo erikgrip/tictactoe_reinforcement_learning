@@ -3,7 +3,7 @@ from tic_tac_toe.agent.agent import Agent
 import random
 import numpy as np
 from PIL import Image
-import cv2
+
 
 class TicTacToeGameManager():
     def __init__(self, strategy=None, saved_model=None):
