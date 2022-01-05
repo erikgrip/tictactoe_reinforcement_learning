@@ -20,11 +20,25 @@ import argparse
 import json
 
 
-# Environment settings
-OPPONENT_MODEL = False
+NUM_EPISODES_TO_AGG_STATS = 50
+PARAM_DF_EVAL_EPISODES= 1_000
 
-#  Model save and stats settings
-AGGREGATE_STATS_EVERY = 50  # episodes
+def _play_turns(agent, env, current_state):
+    # Select and perform action
+    action = agent.get_action(current_state, env.valid_actions())
+    next_state, reward, done = env.step(action)
+
+    # Make opponent move
+    if not done:
+        env_action = env.get_env_action(next_state)
+        next_state, reward, done = env.step(env_action)
+        # If env won them the agent lost
+        if reward == env.win_reward():
+            reward = env.loss_penalty()
+
+    next_valid_actions = env.valid_actions()
+    return action, next_state, reward, done, next_valid_actions
+
 
 def main(input_spec):
 
