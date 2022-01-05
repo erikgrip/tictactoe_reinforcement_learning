@@ -1,4 +1,6 @@
 import json
+import os
+from typing import List
 import pandas as pd
 import numpy as np
 from keras.models import  Sequential, model_from_json
@@ -60,14 +62,10 @@ def strategy_from_spec(strategy_spec):
 def memory_from_spec(memory_spec):
     try:
         capacity = memory_spec['size']
-    except:
-        pass  # Fix later
-
-    if memory_spec['type'] == 'StandardReplayMemory':
         memory = StandardReplayMemory(capacity)
-    else:
-        raise ValueError("Invalid memory specification")
-    return memory
+        return memory
+    except KeyError as e:
+        print("Invalid memory specification.", e)
 
 
 def _spec_to_df(spec):
