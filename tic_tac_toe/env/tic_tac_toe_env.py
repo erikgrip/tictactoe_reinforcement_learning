@@ -1,6 +1,6 @@
 import numpy as np
 
-class TicTacToe:    
+class TicTacToe:
     def __init__(self):
         self.game_size = 3
         self.action_space_size = self.game_size * self.game_size

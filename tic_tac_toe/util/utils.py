@@ -43,8 +43,9 @@ def strategy_from_spec(strategy_spec):
         end = strategy_spec['min']
         decay = strategy_spec['decay']
     except:
+        # Keys not available if MaxStrategy
         pass
-        
+
     if strategy_spec['type'] == 'EpsilonGreedyStrategy':
         if start > 1:
             start = 1  # In param search Boltzmann T range might go in here
@@ -88,11 +89,11 @@ def _spec_to_df(spec):
             else:
                 out_dict[prefix+k] = v
         return out_dict
-    
+
     # Read spec to one-row df
     d = flatten(spec)
     df = pd.DataFrame.from_dict(d, orient='index').transpose()
-    
+
     # Transform to one row for each possible parameter combination
     for col in df.columns:
         if not col == 'net.layers.1.config.input_shape':  # Leave input shape
@@ -111,13 +112,13 @@ def df_row_to_spec(pd_series):
             _nest_dict_rec(rest[0], v, out.setdefault(k, {}), separator)
         else:
             out[k] = v
-    
+
     def nest_dict(flat, separator='.'):
         result = {}
         for k, v in flat.items():
             _nest_dict_rec(k, v, result, separator)
         return result
-    
+
     d = pd_series.transpose().to_dict()
     d = nest_dict(d)
     # Remove layer enumaration added in spec_to_df
@@ -127,8 +128,8 @@ def df_row_to_spec(pd_series):
 
 
 def param_search_df_from_spec(spec_in):
-    ''' Takes a spec file with iterable parameter values (possibly) over which
-        to search. Returns a pandas dataframe that holds a number of 
+    ''' Takes a spec file with iterable parameter values over which
+        to search. Returns a pandas dataframe that holds a number of
         parameter combintations set by spec['search']['max_combinations']'''
     df = _spec_to_df(spec_in)
 

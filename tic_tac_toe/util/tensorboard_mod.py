@@ -31,6 +31,7 @@ class ModifiedTensorBoard(TensorBoard):
     def on_train_end(self, _):
         pass
 
+
     def on_train_batch_end(self, batch, logs=None):
         pass
 
@@ -38,6 +39,7 @@ class ModifiedTensorBoard(TensorBoard):
     # Creates writer, writes custom metrics and closes writer
     def update_stats(self, **stats):
         self._write_logs(stats, self.step)
+
 
     def _write_logs(self, logs, index):
         with self.writer.as_default():
