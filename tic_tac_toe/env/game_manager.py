@@ -13,6 +13,8 @@ class TicTacToeGameManager():
 
 
     def reset(self):
+        """Reset game board and return empty board or board
+        with initial move played, depending on who's starting"""
         self.game_history = []
         observation = self.game.reset()
         self.agent_plays_first = random.choice([0, 1])

@@ -8,9 +8,10 @@ class TicTacToe:
         self.win_reward = 1
         self.draw_reward = 0
         self.loss_penalty = -1
-        self.reset()          
+        self.reset()
 
     def reset(self):
+        '''Reset game and return fresh board with no markers on it'''
         self.board = \
             [[0 for i in range(self.game_size)] for i in range(self.game_size)]
         self.valid_actions = list(range(self.game_size * self.game_size))
@@ -18,14 +19,16 @@ class TicTacToe:
         observation = np.array(self.board)
         return observation
 
-    def step(self, action): 
+
+    def step(self, action):
+        """Take a move, square 0-8, and place a marker on the board."""
         if len(self.valid_actions) % 2 == 0:
             player = 2
         else:
             player = 1
-        
+
         self.play_pawn(action, player)
- 
+
         reward = 0
         if self.win(self.board):
             reward = self.win_reward
