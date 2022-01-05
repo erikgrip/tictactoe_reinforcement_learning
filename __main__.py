@@ -15,8 +15,6 @@ import shelve
 import argparse
 import json
 
-# Model path or False to create new models
-AGENT_MODEL = False
 
 # Environment settings
 OPPONENT_MODEL = False
@@ -36,9 +34,6 @@ def main(input_spec):
     for df_index, df_row in param_df.iterrows():
 
         spec = df_row_to_spec(df_row.drop('eval_avg'))
-
-        ENV_MODE = spec['environment']['mode']
-        RUN_MODE = spec['run']['mode']
         EPISODES = spec['run']['num_episodes']
         MIN_MEMORY_TO_TRAIN = spec['replay_memory']['min_memory']
         MINIBATCH_SIZE = spec['replay_memory']['minibatch_size']
@@ -47,26 +42,18 @@ def main(input_spec):
         NET_SPEC = spec['net']
         DISCOUNT = spec['algorithm']['discount']
 
-        pkg_path = str(Path(__file__).parent.absolute() / "tic_tac_toe/")
-        # Create output folders
-        folders = ['/models', '/replay_history', '/specs', '/param_search']
-        for folder in folders:
-            if not os.path.isdir(pkg_path + folder):
-                os.makedirs(pkg_path + folder)
-
-        model_timestamp = int(time.time())
         tensorboard = ModifiedTensorBoard(
-            log_dir=f"{pkg_path}/logs/{search_timestamp}/{MODEL_NAME}-{model_timestamp}")
+            log_dir=log_dir+f"{MODEL_NAME}-{run_ts}")
 
-        # Include next valid action because else model won't know
-        # which future qvalues to discard
+        # Include next_valid_action because else model won't know
+        # which future q values to discard
         Experience = namedtuple(
             'Experience',
             ('state', 'action', 'reward',
              'next_state', 'next_valid_actions','is_terminal_state'))
 
 
-        env = TicTacToeGameManager(mode=ENV_MODE)
+        env = TicTacToeGameManager()
         strategy = strategy_from_spec(spec['strategy'])
         memory = memory_from_spec(spec['replay_memory'])
         model = DQN(policy_model=sequential_model_from_spec(NET_SPEC),
@@ -151,17 +138,7 @@ def main(input_spec):
         with open(spec_file_name, 'w') as json_file:
             json.dump(spec, json_file)
 
-        # Keep games if player manually
-        if ENV_MODE == 'human':
-            # Save replay memory to file
-            replay_history = shelve.open(f"{pkg_path}/replay_history/replay_history")
-            games_db = shelve.open(f"{pkg_path}/replay_history/saved_games")
-            replay_history[f"{MODEL_NAME}_{model_timestamp}"] = memory.memory
-            games_db[f"{MODEL_NAME}_{model_timestamp}"] = saved_games
-            replay_history.close()
-            games_db.close()
-
-        # Evaluation run
+        # Loop over evaluation episodes with no exploration
         agent = Agent(MaxStrategy(), model)
         for episode in range(1, PARAM_DF_EVAL_WINDOW+1):
                 episode_reward = 0

@@ -37,7 +37,7 @@ class TicTacToe:
         new_observation = np.array(self.board)
         return new_observation, reward, self.done
 
-    
+
     def play_pawn(self, action, player):
         if action in self.valid_actions:
             if action == 0:

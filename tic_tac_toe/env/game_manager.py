@@ -6,16 +6,12 @@ from PIL import Image
 import cv2
 
 class TicTacToeGameManager():
-    def __init__(self, mode='random', strategy=None, saved_model=None):
+    def __init__(self, strategy=None, saved_model=None):
         self.game = TicTacToe()
-        self.mode = mode
-        if self.mode == 'model':
-            self.agent = Agent(strategy, saved_model)
-        else: 
-            self.agent = None
         self.agent_first_cmap = {0: 177, 1: 255, 2: 0}
         self.agent_last_cmap = {0: 177, 1: 0, 2: 255}
-    
+
+
     def reset(self):
         self.game_history = []
         observation = self.game.reset()
