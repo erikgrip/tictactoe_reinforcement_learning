@@ -1,0 +1,19 @@
+version: '3.9'
+
+services:
+  train:
+    build: .
+    volumes:
+     - ./tic_tac_toe:/tic_tac_toe
+     - ./__main__.py:/__main__.py
+     - ./run.sh:/run.sh
+     - ./spec.json:/spec.json
+    #command: ["python", "__main__.py", "spec.json"]
+    command: ['./run.sh']
+  tensorboard:
+    build: .
+    volumes:
+     - ./tic_tac_toe:/tic_tac_toe
+    ports:
+      - 8088:8088
+    command: ["tensorboard", "--logdir=/tic_tac_toe/logs/", "--host", "0.0.0.0", "--port", "8088"]
