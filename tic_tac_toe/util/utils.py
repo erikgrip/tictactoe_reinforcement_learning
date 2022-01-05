@@ -140,10 +140,12 @@ def param_search_df_from_spec(spec_in):
             max_num_param_combos = spec_in['search']['max_combinations']
         except:
             raise ValueError('Set number of parameter combinations to search')
-            
+
         sample_size = np.min([max_num_param_combos, len(df)])
         df_subset = df.sample(sample_size).reset_index(drop=True)
     return df_subset
 
-    
-    
+
+def create_dir_if_not_exist(path):
+    if not os.path.isdir(path):
+            os.makedirs(path)

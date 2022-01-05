@@ -41,15 +41,23 @@ def _play_turns(agent, env, current_state):
 
 
 def main(input_spec):
+    # Create output folders
+    experiment_ts = int(time.time())
+    pkg_path = str(Path(__file__).parent.absolute() / "tic_tac_toe/")
+    log_dir   = f"{pkg_path}/logs/{experiment_ts}/"
+    model_dir = f"{pkg_path}/models/{experiment_ts}/"
+    param_dir = f"{pkg_path}/param_search/{experiment_ts}/"
+    spec_dir  = f"{pkg_path}/specs/{experiment_ts}/"
+    dirs = [log_dir, model_dir, param_dir, spec_dir]
+    for d in dirs:
+        create_dir_if_not_exist(d)
 
     param_df = param_search_df_from_spec(input_spec)
     param_df['eval_avg'] = None  # For keeping evaluation run result
-    PARAM_DF_EVAL_WINDOW = 1_000  # Evaluate on last 2k episodes i train run
-
-    search_timestamp = int(time.time())
 
     # Loop over sample of parameter combinations from input spec
     for df_index, df_row in param_df.iterrows():
+        run_ts = int(time.time())
 
         spec = df_row_to_spec(df_row.drop('eval_avg'))
         EPISODES = spec['run']['num_episodes']
@@ -135,7 +143,7 @@ def main(input_spec):
 
         # Save model
         model_file_name = f"{MODEL_NAME}-{run_ts}.model"
-        model.policy_model.model.save(model_file_name)
+        model.policy_model.model.save(model_dir+model_file_name)
 
         # Save spec
         spec_file_name = f"{MODEL_NAME}-{run_ts}-spec.json"
