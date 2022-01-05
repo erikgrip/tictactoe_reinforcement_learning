@@ -63,61 +63,61 @@ class TicTacToe:
                 row, col = (2, 2)
         else:
             raise ValueError
-       
+
         self.board[row][col] = player
         self.valid_actions.remove(action)
-    
+
+
     def print_board(self):
         print("---------")
         print(self.board[0])
         print(self.board[1])
         print(self.board[2])
         print("---------")
-    
-    
+
+
     def win(self, current_game):
-        def all_same(l):
-            if l.count(l[0]) == len(l) and l[0] != 0:
+        def all_elements_equal(a_list):
+            if a_list.count(a_list[0]) == len(a_list) and a_list[0] != 0:
                 return True
             else:
                 return False
-        # Horizontal
+
+        def check_for_winner(a_list):
+            if all_elements_equal(a_list):
+                player = a_list[0]
+                return True
+            else:
+                return False
+
+        # Check horizontal win
         for row in current_game:
-            if all_same(row):
-                player = row[0]
-                print(f"Player {player} won the game horizontally!")
+            if check_for_winner(row):
                 return True
-        # Vertical
-        for col in range(len(current_game)):
-            check = []
+        # Check vertical win
+        for col in range(self.game_size):
+            col_markers = []
             for row in current_game:
-                check.append(row[col])
-            if all_same(check):
-                player = check[0]
-                print(f"Player {player} won the game vertically!")   
+                col_markers.append(row[col])
+            if check_for_winner(col_markers):
                 return True
-        # Diagonal
+        # Check diagonal win
         diags = []
-        for ix in range(len(current_game)):
+        for ix in range(self.game_size):
             diags.append(current_game[ix][ix])
-        if all_same(diags):
-            player = diags[0]
-            print(f"Player {player} won the game diagonally!")   
+        if check_for_winner(diags):
             return True
         diags = []
-        for col, row in enumerate(reversed(range(len(current_game)))):
+        for col, row in enumerate(reversed(range(self.game_size))):
             diags.append(current_game[row][col])
-        if all_same(diags):
-            player = diags[0]
-            print(f"Player {player} won the game diagonally!") 
+        if check_for_winner(diags):
             return True
-        
+
         return False
-    
+
+
     def draw(self, current_game):
         if any(0 in row for row in current_game):
             return False
         else:
             return True
-
-
