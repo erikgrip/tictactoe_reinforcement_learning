@@ -156,6 +156,11 @@ def main(input_spec):
         with open(spec_dir+spec_file_name, 'w') as json_file:
             json.dump(spec, json_file)
 
+        # Print evaluation stats
+        pct_win = int((ep_rewards[-EVAL_EPISODES:].count(env.win_reward()) / EVAL_EPISODES) * 100)
+        pct_loss = int((ep_rewards[-EVAL_EPISODES:].count(env.loss_penalty()) / EVAL_EPISODES) * 100)
+        avg_rew = np.mean(ep_rewards[-EVAL_EPISODES:])
+        print(f"Run: {run_ts}, Wins: {pct_win}%, Losses: {pct_loss}%, Average reward: {avg_rew}")
 
 
 
