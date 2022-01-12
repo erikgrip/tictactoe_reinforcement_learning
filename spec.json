@@ -1,16 +1,16 @@
 {
     "run": {
-        "mode": "train",
-        "num_episodes": 10000
+        "num_train_episodes": 5000,
+        "num_eval_episodes": 1000
     },
     "search": {
-        "max_combinations": 25
+        "max_combinations": 1
     },
     "strategy": {
-        "type": ["Boltzmann", "EpsilonGreedyStrategy"],
+        "type": "Boltzmann",
         "max": 1,
-        "min": [0.05, 0.1, 0.2],
-        "decay": [0.001, 0.005]
+        "min": 0.1,
+        "decay": 0.001
     },
     "net": {
         "name": "2xDen",
@@ -22,25 +22,25 @@
             {
             "class_name": "Dense",
             "config": {
-                "units": [64, 128, 256],
+                "units": 128,
                 "activation": "relu",
                 "kernel_initializer": "glorot_uniform"}
             },
             {
             "class_name": "Dropout",
-            "config": {"rate": [0.05, 0.1, 0.15]}
+            "config": {"rate": 0.1}
             },
             {
             "class_name": "Dense",
                 "config": {
-                    "units": [64, 128, 256],
+                    "units": 128,
                     "activation": "relu",
                     "kernel_initializer": "glorot_uniform"}
             },
             {
             "class_name": "Dropout",
             "config": {
-                "rate": [0.05, 0.1, 0.15]}
+                "rate": 0.1}
             },
             {
             "class_name": "Dense",
@@ -48,13 +48,13 @@
                 "units": 9,
                 "activation": "linear"}
             }],
-        "lr": [0.0005, 0.001],
-        "loss": ["mean_squared_error", "huber_loss"],
+        "lr": 0.001,
+        "loss": "huber_loss",
         "keras_version": "2.3.1"
     },
     "replay_memory": {
-        "size": [25000, 50000],
-        "minibatch_size": [32, 64, 128],
+        "size": 25000,
+        "minibatch_size": 128,
         "min_memory": 128
     },
     "algorithm": {
