@@ -1,2 +1,2 @@
 #!/bin/sh
-python ./__main__.py spec.json
+python ./tic_tac_toe spec.json

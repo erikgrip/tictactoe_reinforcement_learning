@@ -1,4 +1,4 @@
-from tic_tac_toe.agent.strategy.epsilon_greedy import EpsilonGreedyStrategy
+from agent.strategy.epsilon_greedy import EpsilonGreedyStrategy
 
 class MaxStrategy(EpsilonGreedyStrategy):
     def __init__(self):

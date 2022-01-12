@@ -6,11 +6,12 @@ import numpy as np
 from keras.models import  Sequential, model_from_json
 from keras.optimizers import Adam
 from keras.layers import Activation, Conv2D, Dense, Flatten, Dropout
-from tic_tac_toe.agent.strategy.epsilon_greedy import EpsilonGreedyStrategy
-from tic_tac_toe.agent.strategy.boltzmann import Boltzmann
-from tic_tac_toe.agent.strategy.max_strategy import MaxStrategy
-from tic_tac_toe.agent.memory.replay import StandardReplayMemory
 from keras.models import load_model
+from agent.strategy.epsilon_greedy import EpsilonGreedyStrategy
+from agent.strategy.boltzmann import Boltzmann
+from agent.strategy.max_strategy import MaxStrategy
+from agent.memory.replay import StandardReplayMemory
+
 
 
 def sequential_model_from_spec(net_spec):
