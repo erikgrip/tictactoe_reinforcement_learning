@@ -1,8 +1,8 @@
-from tic_tac_toe.env.game_manager import TicTacToeGameManager
-from tic_tac_toe.agent.agent import Agent
-from tic_tac_toe.agent.algorithm.dqn import DQN
-from tic_tac_toe.agent.strategy.max_strategy import MaxStrategy
-from tic_tac_toe.util.utils import (
+from env.game_manager import TicTacToeGameManager
+from agent.agent import Agent
+from agent.algorithm.dqn import DQN
+from agent.strategy.max_strategy import MaxStrategy
+from util.utils import (
     create_dir_if_not_exist,
     sequential_model_from_spec,
     strategy_from_spec,
@@ -10,7 +10,7 @@ from tic_tac_toe.util.utils import (
     param_search_df_from_spec,
     df_row_to_spec,
     sequential_model_from_spec)
-from tic_tac_toe.util.tensorboard_mod import ModifiedTensorBoard
+from util.tensorboard_mod import ModifiedTensorBoard
 import os
 from pathlib import Path
 import time
@@ -18,10 +18,10 @@ from tqdm import tqdm
 from collections import namedtuple
 import argparse
 import json
+import numpy as np
 
 
 NUM_EPISODES_TO_AGG_STATS = 50
-PARAM_DF_EVAL_EPISODES= 1_000
 
 def _play_turns(agent, env, current_state):
     # Select and perform action
@@ -43,24 +43,17 @@ def _play_turns(agent, env, current_state):
 def main(input_spec):
     # Create output folders
     experiment_ts = int(time.time())
-    pkg_path = str(Path(__file__).parent.absolute() / "tic_tac_toe/")
+    pkg_path = str(Path(__file__).parent.absolute())
     log_dir   = f"{pkg_path}/logs/{experiment_ts}/"
     model_dir = f"{pkg_path}/models/{experiment_ts}/"
-    param_dir = f"{pkg_path}/param_search/{experiment_ts}/"
     spec_dir  = f"{pkg_path}/specs/{experiment_ts}/"
-    dirs = [log_dir, model_dir, param_dir, spec_dir]
     for d in dirs:
         create_dir_if_not_exist(d)
 
     param_df = param_search_df_from_spec(input_spec)
-    param_df['eval_avg'] = None  # For keeping evaluation run result
-
     # Loop over sample of parameter combinations from input spec
-    for df_index, df_row in param_df.iterrows():
         run_ts = int(time.time())
 
-        spec = df_row_to_spec(df_row.drop('eval_avg'))
-        EPISODES = spec['run']['num_episodes']
         MIN_MEMORY_TO_TRAIN = spec['replay_memory']['min_memory']
         MINIBATCH_SIZE = spec['replay_memory']['minibatch_size']
         UPDATE_TARGET_EVERY = spec['algorithm']['target_net_update_freq']
@@ -89,7 +82,6 @@ def main(input_spec):
 
         # Loop over training episodes
         ep_rewards = []
-        for episode in tqdm(range(1, EPISODES+1), ascii=True, unit='episode'):
             tensorboard.step = episode
 
             episode_reward = 0
@@ -100,17 +92,17 @@ def main(input_spec):
                 action, next_state, reward, done, next_valid_actions = (
                     _play_turns(agent, env, current_state))
 
-                # Store experience in replay memory
-                memory.push(
-                    Experience(current_state/255, action, reward,
-                               next_state/255, next_valid_actions, done))
+                    # Store experience in replay memory
+                    memory.push(
+                        Experience(current_state/255, action, reward,
+                                next_state/255, next_valid_actions, done))
 
-                # Train model
-                if memory.can_provide(MIN_MEMORY_TO_TRAIN):
-                    minibatch = memory.sample(MINIBATCH_SIZE)
-                    model.train(minibatch,
-                                game_done=done,
-                                callbacks=[tensorboard])
+                    # Train model
+                    if memory.can_provide(MIN_MEMORY_TO_TRAIN):
+                        minibatch = memory.sample(MINIBATCH_SIZE)
+                        model.train(minibatch,
+                                    game_done=done,
+                                    callbacks=[tensorboard])
 
                 # Get epsilon and update rewards and state
                 episode_reward += reward
@@ -120,7 +112,6 @@ def main(input_spec):
             ep_rewards.append(episode_reward)
 
             # Update target net to equal policy net
-            if episode % UPDATE_TARGET_EVERY == 0:
                 model.update_target_weights()
 
             # Update tensorboard
@@ -147,33 +138,10 @@ def main(input_spec):
 
         # Save spec
         spec_file_name = f"{MODEL_NAME}-{run_ts}-spec.json"
-        with open(spec_file_name, 'w') as json_file:
+        with open(spec_dir+spec_file_name, 'w') as json_file:
             json.dump(spec, json_file)
 
-        # Loop over evaluation episodes with no exploration
-        agent = Agent(MaxStrategy(), model)
-        for episode in range(1, PARAM_DF_EVAL_EPISODES+1):
-                episode_reward = 0
-                current_state = env.reset()
 
-                done = False
-                while not done:
-                    action, next_state, reward, done, next_valid_actions = (
-                        _play_turns(agent, env, current_state))
-
-                    # Get epsilon and update rewards and state
-                    episode_reward += reward
-                    current_state = next_state
-
-                # Append episode reward to a list and log stats
-                ep_rewards.append(episode_reward)
-
-        eval_reward_avg = sum(ep_rewards) / len(ep_rewards)
-        param_df.loc[df_index, 'eval_avg'] = eval_reward_avg
-
-    # Save df with the performance metric column eval_avg
-    param_file_name = f"{MODEL_NAME}-{run_ts}.csv"
-    param_df.to_csv(param_dir+param_file_name, index=False)
 
 
 if __name__ == '__main__':
