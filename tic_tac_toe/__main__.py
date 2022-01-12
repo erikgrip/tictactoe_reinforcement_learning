@@ -47,11 +47,13 @@ def main(input_spec):
     log_dir   = f"{pkg_path}/logs/{experiment_ts}/"
     model_dir = f"{pkg_path}/models/{experiment_ts}/"
     spec_dir  = f"{pkg_path}/specs/{experiment_ts}/"
+    dirs = [log_dir, model_dir, spec_dir]
     for d in dirs:
         create_dir_if_not_exist(d)
 
     param_df = param_search_df_from_spec(input_spec)
     # Loop over sample of parameter combinations from input spec
+    for _, df_row in param_df.iterrows():
         run_ts = int(time.time())
 
         MIN_MEMORY_TO_TRAIN = spec['replay_memory']['min_memory']

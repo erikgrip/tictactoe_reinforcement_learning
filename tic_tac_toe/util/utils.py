@@ -141,7 +141,8 @@ def param_search_df_from_spec(spec_in):
             raise ValueError('Set number of parameter combinations to search')
 
         sample_size = np.min([max_num_param_combos, len(df)])
-        df_subset = df.sample(sample_size).reset_index(drop=True)
+        df_subset = (df.sample(sample_size)
+                     .reset_index(drop=True))
     return df_subset
 
 
