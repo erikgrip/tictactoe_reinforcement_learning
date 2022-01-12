@@ -42,16 +42,23 @@ def sequential_model_from_spec(net_spec):
 
 def strategy_from_spec(strategy_spec):
     try:
+        strategy = strategy_spec['type']
+    except KeyError as e:
+        print("KeyError: Could not find strategy type in specification.")
+        raise KeyError
+
+    try:
         start = strategy_spec['max']
         end = strategy_spec['min']
         decay = strategy_spec['decay']
-    except:
-        # Keys not available if MaxStrategy
-        pass
+    except KeyError as e:
+        if strategy == 'MaxStrategy':
+            # Keys not available if MaxStrategy
+            pass
+        else:
+            raise KeyError(f"Could not find {e} in strategy specification.")
 
     if strategy_spec['type'] == 'EpsilonGreedyStrategy':
-        if start > 1:
-            start = 1  # In param search Boltzmann T range might go in here
         strategy = EpsilonGreedyStrategy(start=start, end=end, decay=decay)
     elif strategy_spec['type'] == 'MaxStrategy':
         strategy = MaxStrategy()
