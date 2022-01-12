@@ -56,6 +56,9 @@ def main(input_spec):
     for _, df_row in param_df.iterrows():
         run_ts = int(time.time())
 
+        spec = df_row_to_spec(df_row)
+        TRAIN_EPISODES = spec['run']['num_train_episodes']
+        EVAL_EPISODES = spec['run']['num_eval_episodes']
         MIN_MEMORY_TO_TRAIN = spec['replay_memory']['min_memory']
         MINIBATCH_SIZE = spec['replay_memory']['minibatch_size']
         UPDATE_TARGET_EVERY = spec['algorithm']['target_net_update_freq']
@@ -83,8 +86,12 @@ def main(input_spec):
         agent = Agent(strategy, model)
 
         # Loop over training episodes
+        total_episodes = TRAIN_EPISODES + EVAL_EPISODES
         ep_rewards = []
+        for episode in tqdm(range(1, total_episodes+1), ascii=True, unit='episode'):
             tensorboard.step = episode
+            is_train_episode = episode <= TRAIN_EPISODES
+            is_eval_episode  = episode > TRAIN_EPISODES
 
             episode_reward = 0
             current_state = env.reset()
@@ -94,6 +101,7 @@ def main(input_spec):
                 action, next_state, reward, done, next_valid_actions = (
                     _play_turns(agent, env, current_state))
 
+                if is_train_episode:
                     # Store experience in replay memory
                     memory.push(
                         Experience(current_state/255, action, reward,
@@ -114,6 +122,7 @@ def main(input_spec):
             ep_rewards.append(episode_reward)
 
             # Update target net to equal policy net
+            if is_train_episode & (episode % UPDATE_TARGET_EVERY == 0):
                 model.update_target_weights()
 
             # Update tensorboard
@@ -133,6 +142,10 @@ def main(input_spec):
                                          draw_percent=pct_draw,
                                          loss_percent=pct_loss,
                                          exploration_parameter=explore_param)
+
+            # Don't explore once the evaluation episodes begins
+            if episode >= TRAIN_EPISODES:
+                agent.strategy = MaxStrategy()
 
         # Save model
         model_file_name = f"{MODEL_NAME}-{run_ts}.model"
