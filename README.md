@@ -145,7 +145,7 @@ Example:
 **discount**: The rate of which expected future rewards diminish compared to instant rewards. In this game there's only one reward (or penalty) at the end of each game though.
 
 ## Parameter search
-To train multiple models using different parameters, set the parameter choises in square brackets in the spec, like so:
+To train multiple models using different parameters, set the parameter choices in square brackets in the spec, like so:
 ```
 "strategy": {
     "type": ["Boltzmann", "EpsilonGreedyStrategy"],
